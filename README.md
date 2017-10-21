@@ -1,10 +1,10 @@
 This Program For Merging Images
 
-1. Merge Two Images
- - Result File = Merged Image, Part of Merged Image
+1. Composite Two Images
+ - Result File = Composite Image, Part of Source Image, Part of Composite Image
 
-2. Merge A Number of Images In Two Directories
- - Result File = Merged Images, Part of Merged Images
+2. Composite A Number of Images In Two Directories
+ - Result File = Composite Images, Part of Source Images, Part of Composite Images
 
 --Requirment
 Pillow==4.2.1

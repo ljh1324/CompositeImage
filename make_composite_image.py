@@ -2,45 +2,37 @@ from PIL import Image
 from PIL import ImageFilter
 import random
 import os
+import copy
 
 
-def merge_blur(src, obj, info, composed_img_name, part_of_img_name):
+def composite_with_blend(src, obj, info, composed_img_name, part_of_img_name, part_of_composite_img_name):
     src_img = Image.open(src)
     obj_img = Image.open(obj)
     x, y = src_img.size
 
-    resize_x = int(x * info['ratio'])
-    resize_y = int(y * info['ratio'])
+    resize_x, resize_y = info['size']
 
     obj_img = obj_img.resize((resize_x, resize_y))
-
-    src_img_raw = src_img.load()
     obj_img_raw = obj_img.load()
 
     loc_x = random.randrange(0, x - resize_x)
-    loc_y = random.randrange(int(x / 2), y - resize_y)
+    loc_y = random.randrange(int(y / 2), y - resize_y)
 
+    part_of_img = src_img.crop((loc_x, loc_y, loc_x + resize_x, loc_y + resize_y))
+    part_of_img.save(part_of_img_name)
+
+    copy_img = copy.deepcopy(part_of_img)
+
+    part_of_img_raw = part_of_img.load()
     for i in range(resize_x):
         for j in range(resize_y):
             if not check_range(obj_img_raw[i, j], info['background'], info['theta']):
-                src_img_raw[loc_x + i, loc_y + j] = obj_img_raw[i, j]
+                part_of_img_raw[i, j] = obj_img_raw[i, j]
+    blend_img = Image.blend(copy_img, part_of_img, info['alpha'])
 
-    empty_img = Image.new("RGB", (resize_x, resize_y))
-    empty_img_raw = empty_img.load()
+    src_img.paste(blend_img, (loc_x, loc_y))
 
-    for i in range(resize_x):
-        for j in range(resize_y):
-            empty_img_raw[i, j] = src_img_raw[loc_x + i, loc_y + j]
-
-    empty_img = empty_img.filter(ImageFilter.MedianFilter)
-
-    empty_img.save(part_of_img_name)                # Apply Filter
-    empty_img = Image.open(part_of_img_name)
-
-    empty_img_raw = empty_img.load()
-    for i in range(resize_x):
-        for j in range(resize_y):
-            src_img_raw[loc_x + i, loc_y + j] = empty_img_raw[i, j]
+    blend_img.save(part_of_composite_img_name)                # Apply Filter
     src_img.save(composed_img_name)
 
 
@@ -66,7 +58,11 @@ if __name__ == '__main__':
     dir = r'test'
     src = 'office.jpg'
     obj = 'fire.jpg'
+
     composed_img_name = 'composed.jpg'
-    part_of_image_name = 'part_of_image.jpg'
-    info = { 'ratio' : 0.2, 'background' : (0, 0, 0), 'theta' : 20}
-    merge_blur(join(dir, src), join(dir, obj), info, join(dir, composed_img_name), join(dir, part_of_image_name))
+    part_of_img_name = 'part_of_img.jpg'
+    part_of_composite_img_name = 'part_of_composite_img.jpg'
+
+    info = { 'ratio' : 0.2, 'background' : (0, 0, 0), 'theta' : 20, 'alpha' : 0.75, 'size' : (64, 64)}
+
+    composite_with_blend(join(dir, src), join(dir, obj), info, join(dir, composed_img_name), join(dir, part_of_img_name), join(dir, part_of_composite_img_name))
