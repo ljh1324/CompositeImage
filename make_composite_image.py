@@ -18,21 +18,55 @@ def composite_with_blend(src, obj, info, composed_img_name, part_of_img_name, pa
     loc_x = random.randrange(0, x - resize_x)
     loc_y = random.randrange(int(y / 2), y - resize_y)
 
-    part_of_img = src_img.crop((loc_x, loc_y, loc_x + resize_x, loc_y + resize_y))
+    part_of_img = src_img.crop((loc_x, loc_y, loc_x + resize_x, loc_y + resize_y)) # crop src image
     part_of_img.save(part_of_img_name)
 
-    copy_img = copy.deepcopy(part_of_img)
+    copy_img = copy.deepcopy(part_of_img)                                          # copy croped image
 
     part_of_img_raw = part_of_img.load()
     for i in range(resize_x):
         for j in range(resize_y):
             if not check_range(obj_img_raw[i, j], info['background'], info['theta']):
-                part_of_img_raw[i, j] = obj_img_raw[i, j]
-    blend_img = Image.blend(copy_img, part_of_img, info['alpha'])
+                part_of_img_raw[i, j] = obj_img_raw[i, j]                          # composite part_of_image, fire
+    blend_img = Image.blend(copy_img, part_of_img, info['alpha'])                 # composite part_of_image, part_of_composite_image with alpha
 
-    src_img.paste(blend_img, (loc_x, loc_y))
+    src_img.paste(blend_img, (loc_x, loc_y))                                       # composite src_image, composite final part_of_image
 
-    blend_img.save(part_of_composite_img_name)                # Apply Filter
+    blend_img.save(part_of_composite_img_name)                                     # save
+    src_img.save(composed_img_name)
+
+
+def composite_with_img(src_img, obj_img, info, composed_img_name, part_of_img_name, part_of_composite_img_name):
+    x, y = src_img.size
+
+    resize_x, resize_y = info['size']
+
+    obj_img = obj_img.resize((resize_x, resize_y))
+    obj_img_raw = obj_img.load()
+
+    loc_x = random.randrange(0, x - resize_x)
+    loc_y = random.randrange(int(y / 2), y - resize_y)
+
+    part_of_img = src_img.crop((loc_x, loc_y, loc_x + resize_x, loc_y + resize_y)) # crop src image
+    part_of_img.save(part_of_img_name)
+
+    copy_img = copy.deepcopy(part_of_img)                                          # copy croped image
+
+    part_of_img_raw = part_of_img.load()
+    for i in range(resize_x):
+        for j in range(resize_y):
+            if not check_range(obj_img_raw[i, j], info['background'], info['theta']):
+                part_of_img_raw[i, j] = obj_img_raw[i, j]                          # composite part_of_image, fire
+
+    part_of_img.filter(ImageFilter.MedianFilter)
+    part_of_img.save(part_of_composite_img_name)
+    part_of_img = Image.open(part_of_composite_img_name)
+
+    blend_img = Image.blend(copy_img, part_of_img, info['alpha'])                 # composite part_of_image, part_of_composite_image with alpha
+
+    src_img.paste(blend_img, (loc_x, loc_y))                                       # composite src_image, composite final part_of_image
+
+    blend_img.save(part_of_composite_img_name)                                     # save
     src_img.save(composed_img_name)
 
 
@@ -63,6 +97,6 @@ if __name__ == '__main__':
     part_of_img_name = 'part_of_img.jpg'
     part_of_composite_img_name = 'part_of_composite_img.jpg'
 
-    info = { 'ratio' : 0.2, 'background' : (0, 0, 0), 'theta' : 20, 'alpha' : 0.75, 'size' : (64, 64)}
+    info = {'background' : (0, 0, 0), 'theta' : 20, 'alpha' : 0.75, 'size' : (64, 64)}
 
     composite_with_blend(join(dir, src), join(dir, obj), info, join(dir, composed_img_name), join(dir, part_of_img_name), join(dir, part_of_composite_img_name))
